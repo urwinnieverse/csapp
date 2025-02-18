@@ -34,11 +34,13 @@ dependencies:
   flip_card: ^0.6.0
   google_fonts: ^6.1.0
   animated_text_kit: ^4.2.2
-
+  firebase_auth: ^5.4.2
+  
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
+  firebase_core: ^3.11.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -56,6 +58,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
+    - assets/images/Group 41.png
     - assets/images/alien.png
     - assets/images/alien1.png
     - assets/images/alien2.png
