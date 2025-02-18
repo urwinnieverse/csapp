@@ -191,6 +191,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   SizedBox(height: 50),
                 ],
               ),
+              )
             ),
           ),
         ],
