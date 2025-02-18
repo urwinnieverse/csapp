@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           fontWeight: FontWeight.bold,
                           color: Colors.black)),
                   SizedBox(height: 50),
-                  Text("Enter your Alien Name",
+                  Text("Enter your Alien e-mail",
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
