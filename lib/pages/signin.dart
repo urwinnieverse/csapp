@@ -1,7 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'courses_screen.dart';
 
+
 class SigninScreen extends StatelessWidget {
+  //text controller to keep track of whats inside the text field ounce user types//
+  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  
   // Custom method to navigate with smooth transition
   void _navigateWithTransition(BuildContext context, Widget screen) {
     Navigator.push(
@@ -21,6 +27,35 @@ class SigninScreen extends StatelessWidget {
       ),
     );
   }
+//signin method
+  Future<void> _signin(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // ✅ Navigate to CoursesScreen on success
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => CoursesScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = "An error occurred";
+      if (e.code == 'email-already-in-use') {
+        errorMessage = "This email is already in use.";
+      } else if (e.code == 'weak-password') {
+        errorMessage = "The password is too weak.";
+      } else if (e.code == 'invalid-email') {
+        errorMessage = "Invalid email format.";
+      }
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +72,7 @@ class SigninScreen extends StatelessWidget {
           ),
           Center(
             child: Padding(
+              child:SingleChildScrollView(  //gets rid of the bufferverflow//
               padding: const EdgeInsets.all(75.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -95,6 +131,7 @@ class SigninScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  //email textfield//
                   SizedBox(height: 10),
                   Text("Enter your Alien E-mail", style: TextStyle(
                       fontSize: 18,
@@ -103,6 +140,7 @@ class SigninScreen extends StatelessWidget {
                   SizedBox(
                     height: 40,
                     child: TextField(
+                      controller: _emailController,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -113,6 +151,7 @@ class SigninScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  //password textfield//
                   SizedBox(height: 10),
                   Text("Choose a weird Password", style: TextStyle(
                       fontSize: 18,
@@ -121,6 +160,7 @@ class SigninScreen extends StatelessWidget {
                   SizedBox(
                     height: 40,
                     child: TextField(
+                      controller: _passwordController,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -137,10 +177,7 @@ class SigninScreen extends StatelessWidget {
                       foregroundColor: Colors.black,
                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 40),
                     ),
-                    onPressed: () {
-                      // Navigate to CoursesScreen with a smooth transition
-                      _navigateWithTransition(context, CoursesScreen());
-                    },
+                    onPressed: () => _signin(context),
                     child: Text("BECOME AN ALIEN", style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
@@ -149,6 +186,7 @@ class SigninScreen extends StatelessWidget {
              //     SizedBox(height: 60),
                 ],
               ),
+                )
             ),
           ),
         ],
