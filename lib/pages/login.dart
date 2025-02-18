@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'courses_screen.dart';
@@ -13,7 +14,32 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isAlien = false;
+//text controller to keep track of whats inside the text field ounce user types//
+  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+//login method
+  Future _login() async { // so ounce the user presses the button [on pressed] they will sign in using email and pass
 
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        print("Login successful!");  // Debugging print
+
+        // Navigate to CoursesScreen after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => CoursesScreen()),
+        );
+      } catch (e) {
+        print("Login failed: $e");  // Print error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed: ${e.toString()}")),
+        );
+      }
+    }
   @override
   void initState() {
     super.initState();
@@ -30,6 +56,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _emailController.dispose();  //for memory managment//
+    _passwordController.dispose(); //for memory managment//
     _controller.dispose();
     super.dispose();
   }
@@ -100,7 +128,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           color: Colors.black)),
                   SizedBox(
                     height: 40,
-                    child: TextField(
+                    child: TextField(//for email and give it the controller//
+                      controller: _emailController,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -118,7 +147,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           color: Colors.black)),
                   SizedBox(
                     height: 40,
-                    child: TextField(
+                    child: TextField(//for password and give it the controller//
+                      controller: _passwordController,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
@@ -135,9 +165,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       foregroundColor: Colors.black,
                       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 40),
                     ),
-                    onPressed: () {
-                      _navigateWithTransition(CoursesScreen()); // Smooth transition to CoursesScreen
-                    },
+                    onPressed: _login, //navigation to course screen moved to auth_page//
                     child: Text("I am Back!",
                         style: TextStyle(
                             fontSize: 18,
