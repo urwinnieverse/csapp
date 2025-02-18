@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'courses_screen.dart';  // Update with your main screen
-import 'package:code_space_project/pages/login.dart';   // Update with your login screen
+import 'login.dart';   // Update with your login screen
 
 class MainPage extends StatelessWidget {
   @override
