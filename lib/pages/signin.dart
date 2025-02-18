@@ -72,8 +72,8 @@ class SigninScreen extends StatelessWidget {
           ),
           Center(
             child: Padding(
+               padding: const EdgeInsets.all(75.0),
               child:SingleChildScrollView(  //gets rid of the bufferverflow//
-              padding: const EdgeInsets.all(75.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
