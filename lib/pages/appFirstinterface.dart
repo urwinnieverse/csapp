@@ -17,7 +17,7 @@ class appFirstinterface extends StatelessWidget {
             left: 20,
             right: 20,
             bottom: 400,
-            child: Image.asset('assets/images/alien.png', width: 590),
+            child: Image.asset('assets/images/Group 41.png', width: 590),
           ),
           Positioned(
             top: 159,
