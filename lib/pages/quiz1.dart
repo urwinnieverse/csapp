@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'quiz2.dart';
 import 'draggableQuiz.dart';
 
@@ -15,9 +16,46 @@ class QuizPage1 extends StatefulWidget {
 
 class _QuizPage1State extends State<QuizPage1> {
   double progress = 0.33;
-  Map<int, String?> selectedAnswers = {0: null, 1: null, 2: null};
-  final List<String> correctAnswers = [">", "<", "="];
+  Map<int, String?> selectedAnswers = {};
+  List<String> correctAnswers = [];
+  List<String> draggableOptions = [];
+  List<Map<String, String>> questions = [];
   int score = 0;
+
+  // Fetch quiz data from Firebase Firestore
+  Future<void> fetchQuizData() async {
+    try {
+      DocumentSnapshot quizSnapshot = await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(widget.courseName)
+          .collection('lessons')
+          .doc(widget.currentLesson)
+          .collection('quizzes')
+          .doc('quiz1') // Assuming the quiz ID is 'quiz1'
+          .get();
+
+      if (quizSnapshot.exists) {
+        setState(() {
+          correctAnswers = List<String>.from(quizSnapshot['correctAnswers']);
+          draggableOptions = List<String>.from(quizSnapshot['draggableOptions']);
+          questions = List<Map<String, String>>.from(quizSnapshot['questions']);
+          selectedAnswers = Map<int, String?>.fromIterable(
+            List.generate(questions.length, (index) => index),
+            key: (index) => index,
+            value: (index) => null,
+          );
+        });
+      }
+    } catch (e) {
+      print("Error fetching quiz data: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchQuizData();
+  }
 
   void checkAnswers() {
     score = 0;
@@ -62,7 +100,6 @@ class _QuizPage1State extends State<QuizPage1> {
             Text("${(widget.progress * 100).toInt()}%"),
             SizedBox(width: 10),
             Image.asset('assets/images/oxygen-tank1.png', width: 24, height: 24),
-
           ],
         ),
         backgroundColor: Colors.white,
@@ -80,31 +117,42 @@ class _QuizPage1State extends State<QuizPage1> {
                 Align(
                   alignment: Alignment.topRight,
                   child: Image.asset('assets/images/robot.png', width: 40),
-                  ),
+                ),
                 Text(
                   "Fill the following code with the appropriate answer:",
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 20),
-                buildQuestion(0, "Num = 10\nif(num ", " 12):\n      print(\"Number is bigger\")"),
-                SizedBox(height: 20),
-                buildQuestion(1, "if(num ", " 12):\n       print(\"Number is smaller\")"),
-                SizedBox(height: 20),
-                buildQuestion(2, "if(num ", " 12):\nprint(\"Number is 12\")"),
+                if (questions.isNotEmpty)
+                  ...questions.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    return Column(
+                      children: [
+                        buildQuestion(index, entry.value['before']!, entry.value['after']!),
+                        SizedBox(height: 20),
+                      ],
+                    );
+                  }).toList(),
               ],
             ),
           ),
           SizedBox(height: 60),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              DraggableAnswer(text: "=", outerColor: Color(0xFFD54032), innerColor: Color(0xFFFFA198)),
-              SizedBox(width: 20),
-              DraggableAnswer(text: ">", outerColor: Color(0xFF3B7169), innerColor: Color(0xFF83C1B8)),
-              SizedBox(width: 20),
-              DraggableAnswer(text: "<", outerColor: Color(0xFFFBBE64), innerColor: Color(0xFFFCD192)),
-            ],
-          ),
+          if (draggableOptions.isNotEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: draggableOptions.map((option) {
+                return Row(
+                  children: [
+                    DraggableAnswer(
+                      text: option,
+                      outerColor: _getOuterColor(option),
+                      innerColor: _getInnerColor(option),
+                    ),
+                    SizedBox(width: 20),
+                  ],
+                );
+              }).toList(),
+            ),
           SizedBox(height: 125),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -145,7 +193,7 @@ class _QuizPage1State extends State<QuizPage1> {
                         height: 35,
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(8)),
                         ),
                         child: Center(
                           child: Text(selectedAnswers[index] ?? ""),
@@ -169,5 +217,32 @@ class _QuizPage1State extends State<QuizPage1> {
         ),
       ],
     );
+  }
+
+  // Helper methods to get colors for draggable options
+  Color _getOuterColor(String option) {
+    switch (option) {
+      case "=":
+        return Color(0xFFD54032);
+      case ">":
+        return Color(0xFF3B7169);
+      case "<":
+        return Color(0xFFFBBE64);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _getInnerColor(String option) {
+    switch (option) {
+      case "=":
+        return Color(0xFFFFA198);
+      case ">":
+        return Color(0xFF83C1B8);
+      case "<":
+        return Color(0xFFFCD192);
+      default:
+        return Colors.grey;
+    }
   }
 }
