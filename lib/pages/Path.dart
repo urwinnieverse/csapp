@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
 import 'lesson_screen.dart';
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Pathscreen extends StatelessWidget {
   final String courseName;
@@ -9,90 +10,108 @@ class Pathscreen extends StatelessWidget {
 
   Pathscreen({required this.courseName, required this.completionPercentage});
 
-  // Define lesson paths separately for each course
-  final Map<String, List<Map<String, String>>> courseLessons = {
-    "Basic": [
-      {"title": "Lesson 1", "description": "Intro to basics"},
-      {"title": "Lesson 2", "description": "Understanding UI"},
-      {"title": "Lesson 3", "description": "State Management"},
-      {"title": "Lesson 4", "description": "API Calls"},
-      {"title": "Lesson 5", "description": "Final Project"},
-    ],
-    "Python": [
-      {"title": "Lesson 1", "description": "Intro to Python"},
-      {"title": "Lesson 2", "description": "Data Types & Variables"},
-      {"title": "Lesson 3", "description": "Functions & Loops"},
-      {"title": "Lesson 4", "description": "Object-Oriented Programming"},
-      {"title": "Lesson 5", "description": "Building a Python App"},
-    ],
-  };
+  // Fetch lessons from Firebase Firestore
+  Future<List<Map<String, String>>> fetchLessons() async {
+    List<Map<String, String>> lessons = [];
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(courseName)
+          .collection('lessons')
+          .orderBy('order') // Ensure lessons are ordered
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        lessons.add({
+          "title": doc['title'],
+          "description": doc['description'],
+        });
+      }
+    } catch (e) {
+      print("Error fetching lessons: $e");
+    }
+    return lessons;
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, String>> lessons = courseLessons[courseName] ?? [];
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(title: Text("Courses"), backgroundColor: Colors.orange[50]),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          height: lessons.length * 170.0 + 350, // Ensure space for all elements
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset('assets/images/stars.gif', fit: BoxFit.cover),
-              ),
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: PathPainter(lessons.length),
-                ),
-              ),
-              Positioned(
-                top: 50,
-                left: 20,
-                right: 20,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Text(
-                    "Welcome to $courseName",
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(2.0, 2.0),
-                          blurRadius: 3.0,
-                          color: Colors.black.withOpacity(0.5),
-                        ),
-                      ],
+      body: FutureBuilder<List<Map<String, String>>>(
+        future: fetchLessons(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error loading lessons"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text("No lessons available"));
+          }
+
+          List<Map<String, String>> lessons = snapshot.data!;
+
+          return SingleChildScrollView(
+            child: SizedBox(
+              height: lessons.length * 170.0 + 350, // Ensure space for all elements
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset('assets/images/stars.gif', fit: BoxFit.cover),
+                  ),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: PathPainter(lessons.length),
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                ),
-              ),
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Stack(
-                    children: lessons.asMap().entries.map((entry) {
-                      int index = entry.key;
-                      return Positioned(
-                        top: 220.0 + (index * 150.0),
-                        left: (index.isEven) ? 100 : 200,
-                        child: FlipCardWidget(
-                          lessonTitle: entry.value["title"]!,
-                          description: entry.value["description"]!,
-                          courseName: courseName, // Pass courseName for proper lesson selection
+                  Positioned(
+                    top: 50,
+                    left: 20,
+                    right: 20,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Text(
+                        "Welcome to $courseName",
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(2.0, 2.0),
+                              blurRadius: 3.0,
+                              color: Colors.black.withOpacity(0.5),
+                            ),
+                          ],
                         ),
-                      );
-                    }).toList(),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
                   ),
-                ),
+                  Positioned.fill(
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Stack(
+                        children: lessons.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          return Positioned(
+                            top: 220.0 + (index * 150.0),
+                            left: (index.isEven) ? 100 : 200,
+                            child: FlipCardWidget(
+                              lessonTitle: entry.value["title"]!,
+                              description: entry.value["description"]!,
+                              courseName: courseName, // Pass courseName for proper lesson selection
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
