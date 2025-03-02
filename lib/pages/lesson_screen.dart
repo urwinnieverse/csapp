@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'quiz1.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart'; // For YouTube video integration
+// import 'quiz2.dart'; // Import your quiz page
+// import 'draggableQuiz.dart'; // Import your draggable quiz page
 
 class LessonScreen extends StatefulWidget {
-  final String lessonTitle;
-  final String courseName;
+  final String lessonId; // Use lessonId to fetch specific lesson data
+  final String courseId; // Use courseId to fetch specific course data
 
-  LessonScreen({required this.lessonTitle, required this.courseName});
+  LessonScreen({required this.lessonId, required this.courseId});
 
   @override
   _LessonScreenState createState() => _LessonScreenState();
@@ -13,141 +16,68 @@ class LessonScreen extends StatefulWidget {
 
 class _LessonScreenState extends State<LessonScreen> {
   int currentPage = 0;
+  String lessonName = "";
+  String lessonVideoUrl = "";
+  // List<Map<String, dynamic>> lessonQuestions = []; // List of questions for the lesson (commented out)
+  bool isLoading = true;
+  String errorMessage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    fetchLessonData();
+  }
+
+  // Fetch lesson data from Firebase Firestore
+  Future<void> fetchLessonData() async {
+    try {
+      // Fetch the lesson document
+      DocumentSnapshot lessonSnapshot = await FirebaseFirestore.instance
+          .collection('courses')
+          .doc(widget.courseId)
+          .collection('lessons')
+          .doc(widget.lessonId)
+          .get();
+
+      if (lessonSnapshot.exists) {
+        setState(() {
+          lessonName = lessonSnapshot['title']; // Fetch lesson name
+          lessonVideoUrl = lessonSnapshot['videoUrl']; // Fetch video URL
+          // lessonQuestions = List<Map<String, dynamic>>.from(lessonSnapshot['questions']); // Fetch questions (commented out)
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = "Lesson not found!";
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Error fetching lesson data: $e";
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> pages = [];
-
-    if (widget.courseName == "Basic" && widget.lessonTitle == "Lesson 1") {
-      pages = [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Basics: Lesson 1 - Introduction",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Welcome to the basics! In this lesson, we will cover fundamental concepts that will help you understand the course structure.",
-              style: TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            Image.asset('assets/images/basics_intro.png', height: 200),
-          ],
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Basics: Lesson 1 - Key Concepts",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Key Concepts in Basics:\n\n"
-                  "1️⃣ Understanding the User Interface (UI)\n"
-                  "2️⃣ Basic Navigation in the App\n"
-                  "3️⃣ Interacting with Elements\n"
-                  "4️⃣ The Importance of Consistency in Design",
-              style: TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QuizPage1(
-                      courseName: widget.courseName,
-                      currentLesson: widget.lessonTitle,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              child: Text("Go to Quiz"),
-            ),
-          ],
-        ),
-      ];
-    } else if (widget.courseName == "Basic" && widget.lessonTitle == "Lesson 2") {
-      pages = [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Basics: Lesson 2 - UI Design",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ];
-    } else if (widget.courseName == "Python" && widget.lessonTitle == "Lesson 1") {
-      pages = [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Python: Lesson 1 - Introduction",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Python: Lesson 1 - Variables",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ];
-    } else if (widget.courseName == "Python" && widget.lessonTitle == "Lesson 2") {
-      pages = [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Python: Lesson 2 - Data Types",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ];
-    } else {
-      pages = [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Content not available",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ];
-    }
-
     return Scaffold(
       backgroundColor: Colors.orange[50],
       appBar: AppBar(
-        title: Text(widget.lessonTitle),
+        title: Text(lessonName),
         backgroundColor: Colors.orange[50],
       ),
-      body: Column(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : errorMessage.isNotEmpty
+          ? Center(child: Text(errorMessage))
+          : Column(
         children: [
           Expanded(
             child: Padding(
               padding: EdgeInsets.all(20),
-              child: pages[currentPage],
+              child: _buildLessonContent(currentPage),
             ),
           ),
           Row(
@@ -162,29 +92,90 @@ class _LessonScreenState extends State<LessonScreen> {
                     fixedSize: const Size(310, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
-
                     ),
                   ),
                   child: const Text('Back'),
                 ),
-              if (currentPage < pages.length - 1)
-                TextButton(
-                  onPressed: () => setState(() => currentPage++),
-                   style: TextButton.styleFrom(
-                       backgroundColor: Color(0xFFBC8AB3),
-                         foregroundColor: Colors.white,
-                       fixedSize: const Size(310, 50),
-                        shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
-
-    ),
-    ),
-    child: const Text('Next'),
-    ),
+              // if (currentPage < lessonQuestions.length) // Commented out
+              //   TextButton(
+              //     onPressed: () => setState(() => currentPage++),
+              //     style: TextButton.styleFrom(
+              //       backgroundColor: Color(0xFFBC8AB3),
+              //       foregroundColor: Colors.white,
+              //       fixedSize: const Size(310, 50),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(5),
+              //       ),
+              //     ),
+              //     child: const Text('Next'),
+              //   ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  // Build lesson content dynamically
+  Widget _buildLessonContent(int pageIndex) {
+    if (pageIndex == 0) {
+      // First page: Lesson name and video
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            lessonName,
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          if (lessonVideoUrl.isNotEmpty)
+            YoutubePlayer(
+              controller: YoutubePlayerController(
+                initialVideoId: YoutubePlayer.convertUrlToId(lessonVideoUrl)!,
+                flags: YoutubePlayerFlags(
+                  autoPlay: false,
+                  mute: false,
+                ),
+              ),
+              showVideoProgressIndicator: true,
+            ),
+        ],
+      );
+    } else {
+      // Subsequent pages: Questions (commented out)
+      // final question = lessonQuestions[pageIndex - 1]; // Get the current question (commented out)
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Display the question text (commented out)
+          // Text(
+          //   question['question'],
+          //   style: TextStyle(fontSize: 18),
+          //   textAlign: TextAlign.center,
+          // ),
+          SizedBox(height: 20),
+
+          // Handle draggable questions (commented out)
+          // if (question['type'] == 'draggable')
+          //   DraggableQuiz(
+          //     question: question,
+          //     onAnswerSelected: (answer) {
+          //       // Handle answer selection for draggable questions
+          //     },
+          //   ),
+
+          // Handle multiple-choice questions (commented out)
+          // if (question['type'] == 'multipleChoice')
+          //   ...question['options'].map((option) {
+          //     return ElevatedButton(
+          //       onPressed: () {
+          //         // Handle answer selection for multiple-choice questions
+          //       },
+          //       child: Text(option),
+          //     );
+          //   }).toList(),
+        ],
+      );
+    }
   }
 }

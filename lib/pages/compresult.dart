@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Competition.dart';
+import 'package:code_space_project/pages/Competition.dart';
 
 class WinnerPodium extends StatelessWidget {
   @override

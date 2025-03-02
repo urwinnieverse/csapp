@@ -193,7 +193,7 @@ class _QuizPage1State extends State<QuizPage1> {
                         height: 35,
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black),
-                          borderRadius: BorderRadius.circular(8)),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: Text(selectedAnswers[index] ?? ""),

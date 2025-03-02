@@ -186,8 +186,8 @@ class _FlipCardWidgetState extends State<FlipCardWidget> {
         context,
         MaterialPageRoute(
           builder: (context) => LessonScreen(
-            courseName: widget.courseName, // Pass course name to differentiate lessons
-            lessonTitle: widget.lessonTitle,
+            lessonId: widget.lessonTitle,
+            courseId: widget.courseName,
           ),
         ),
       );
